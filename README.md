@@ -1,6 +1,6 @@
-# Serverless & Event-Driven Data Processing Pipeline
+## Serverless & Event-Driven Data Processing Pipeline
 
-Proyek ini merancang dan mengimplementasikan **Serverless & Event-Driven Data Processing Pipeline** yang berfokus pada **Cost Optimization** dan otomatisasi *cloud-native*. Pipeline ini mengeliminasi *idle compute cost* (server aktif 24/7 tanpa beban kerja) dengan memanfaatkan komputasi berbasis event.
+This project designs and implements a **Serverless & Event-Driven Data Processing Pipeline** focused on **Cost Optimization** and cloud-native automation. The pipeline eliminates idle compute costs (24/7 active servers without workload) by leveraging event-driven computing.
 
 ---
 
@@ -30,17 +30,17 @@ Proyek ini merancang dan mengimplementasikan **Serverless & Event-Driven Data Pr
 
 ## 🛠️ Tech Stack Matrix
 
-| Layer / Komponen | Tech Stack | Peran & Fungsi Utama |
+| Layer / Component | Tech Stack | Primary Role & Functionality |
 | --- | --- | --- |
-| **Infrastructure as Code** | Terraform | Memprovisi resource S3, Lambda, DynamoDB, dan SNS ke LocalStack secara otomatis. |
-| **Cloud Emulation** | LocalStack | Mensimulasikan layanan AWS di lingkungan lokal tanpa biaya. |
-| **Data Ingestion API** | FastAPI & Python | REST API Service untuk menerima unggahan berkas data (CSV/JSON). |
-| **Serverless Compute** | AWS Lambda (Python) | Eksekusi otomatis pemrosesan data, kalkulasi agregat, dan deteksi anomali. |
-| **NoSQL Database** | AWS DynamoDB | Menyimpan metadata dan hasil agregasi transaksi yang diproses. |
-| **Alerting System** | AWS SNS | Mengirim notifikasi peringatan saat ditemukan anomali data (misal: transaksi negatif). |
-| **Container & K8s** | Docker & Kubernetes | Membungkus Upload API dan menjalankan skrip pembersihan secara terisolasi di Minikube. |
-| **Housekeeping & Audit** | Bash Script & K8s CronJob | Running secara berkala (cron) untuk audit penggunaan storage S3 dan pembersihan log. |
-| **CI/CD & DevSecOps** | GitHub Actions & Trivy | Automated linting (`flake8`), validasi Terraform, dan security vulnerability scan. |
+| **Infrastructure as Code** | Terraform | Automatically provisions S3, Lambda, DynamoDB, and SNS resources on LocalStack. |
+| **Cloud Emulation** | LocalStack | Simulates AWS services in a local environment with zero cost. |
+| **Data Ingestion API** | FastAPI & Python | REST API service for receiving data file uploads (CSV/JSON). |
+| **Serverless Compute** | AWS Lambda (Python) | Automates data processing execution, aggregate calculations, and anomaly detection. |
+| **NoSQL Database** | AWS DynamoDB | Stores metadata and aggregation results of processed transactions. |
+| **Alerting System** | AWS SNS | Dispatches alert notifications when data anomalies (e.g., negative transactions) are detected. |
+| **Container & K8s** | Docker & Kubernetes | Containers for the Upload API and runs housekeeping scripts in an isolated Minikube environment. |
+| **Housekeeping & Audit** | Bash Script & K8s CronJob | Runs periodically (cron) to audit S3 storage usage and clean up logs. |
+| **CI/CD & DevSecOps** | GitHub Actions & Trivy | Automated linting (`flake8`), Terraform validation, and security vulnerability scanning. |
 
 ---
 
@@ -50,21 +50,21 @@ Proyek ini merancang dan mengimplementasikan **Serverless & Event-Driven Data Pr
 serverless-pipeline/
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml          # Pipeline GitHub Actions CI/CD & Trivy Security Scan
+│       └── ci-cd.yml          # GitHub Actions CI/CD & Trivy Security Scan pipeline
 ├── terraform/
-│   ├── provider.tf            # Konfigurasi Provider AWS (LocalStack path-style)
-│   ├── main.tf                # Manifes S3 Ingestion Bucket, DynamoDB, dan SNS
-│   └── lambda.tf              # Lambda Function, IAM Role, dan S3 Event Trigger
+│   ├── provider.tf            # AWS Provider configuration (LocalStack path-style)
+│   ├── main.tf                # S3 Ingestion Bucket, DynamoDB, and SNS manifests
+│   └── lambda.tf              # Lambda Function, IAM Role, and S3 Event Trigger
 ├── src/
-│   ├── api/                   # Kode FastAPI Upload Service & Dockerfile
-│   ├── lambda/                # Kode Python AWS Lambda Data Processor
-│   └── cronjob/               # Skrip Bash Log Retention & Housekeeping Agent
+│   ├── api/                   # FastAPI Upload Service code & Dockerfile
+│   ├── lambda/                # AWS Lambda Data Processor Python code
+│   └── cronjob/               # Log Retention & Housekeeping Agent Bash script
 ├── k8s/
 │   ├── deployment.yaml        # Kubernetes Deployment & Service (NodePort 30090)
-│   └── cronjob.yaml           # Kubernetes CronJob untuk audit S3 storage
-├── .gitignore                 # Filter lacakan Git untuk venv, .terraform, dan cache
-├── docker-compose.yml         # Konfigurasi LocalStack container
-└── README.md                  # Dokumentasi proyek
+│   └── cronjob.yaml           # Kubernetes CronJob for S3 storage audit
+├── .gitignore                 # Git ignore patterns for venv, .terraform, and caches
+├── docker-compose.yml         # LocalStack container configuration
+└── README.md                  # Project documentation
 
 ```
 
@@ -72,21 +72,21 @@ serverless-pipeline/
 
 ## 🚀 Quick Start Guide
 
-### Prasyarat System
+### System Prerequisites
 
 * Docker & Docker Compose
 * Terraform CLI
 * Kubernetes CLI (`kubectl`) & Minikube
 * Python 3.10+
 
-### 1. Jalankan LocalStack
+### 1. Run LocalStack
 
 ```bash
 docker compose up -d
 
 ```
 
-### 2. Provisi Infrastruktur Cloud via Terraform
+### 2. Provision Cloud Infrastructure via Terraform
 
 ```bash
 cd terraform
@@ -96,27 +96,27 @@ cd ..
 
 ```
 
-### 3. Deploy Aplikasi ke Kubernetes (Minikube)
+### 3. Deploy Application to Kubernetes (Minikube)
 
 ```bash
-# Build Docker image Upload API
+# Build Upload API Docker image
 docker build -t upload-api:v1 src/api/
 
-# Load image ke dalam kluster Minikube
+# Load image into Minikube cluster
 minikube image load upload-api:v1
 
-# Terapkan periferal manifes Kubernetes
+# Apply Kubernetes manifest files
 kubectl apply -f k8s/
 
 ```
 
-### 4. Uji Coba Pipeline End-to-End
+### 4. Test Pipeline End-to-End
 
 ```bash
-# Unggah sampel berkas CSV melalui Service Kubernetes
+# Upload sample CSV file via Kubernetes Service
 curl -X POST "$(minikube service upload-api-service --url)/upload" -F "file=@data_normal.csv"
 
-# Periksa hasil olahan data di DynamoDB
+# Verify processed data output in DynamoDB
 aws --endpoint-url=http://localhost:4566 dynamodb scan --table-name processed-data-table
 
 ```
@@ -125,7 +125,7 @@ aws --endpoint-url=http://localhost:4566 dynamodb scan --table-name processed-da
 
 ## 🔒 DevSecOps & Security Scanning
 
-Proyek ini dilengkapi alur otomatisasi **GitHub Actions CI/CD** yang terdiri dari dua tahapan utama:
+This project includes an automated **GitHub Actions CI/CD** workflow consisting of two main stages:
 
-1. **Code Quality & Validation:** Pemeriksaan kesalahan sintaks Python (`flake8`) serta format dan validasi manifes IaC (`terraform validate`).
-2. **Security & Vulnerability Scan:** Pemindaian keamanan otomatis pada repositori, file Terraform, dan Docker Image menggunakan **Trivy Security Scan** untuk mendeteksi celah keamanan (*HIGH & CRITICAL*).
+1. **Code Quality & Validation:** Python syntax error checking (`flake8`) alongside IaC manifest formatting and validation (`terraform validate`).
+2. **Security & Vulnerability Scan:** Automated security scanning of the repository, Terraform files, and Docker images using **Trivy Security Scan** to detect vulnerabilities (*HIGH & CRITICAL*).
