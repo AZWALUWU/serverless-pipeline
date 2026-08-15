@@ -4,18 +4,18 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, status
 
 app = FastAPI(
     title="Serverless Data Ingestion API",
-    description="API Service untuk mengunggah file data ke AWS S3 Ingestion Bucket",
+    description="API Service for uploading data files to AWS S3 Ingestion Bucket",
     version="1.0.0"
 )
 
-# ------------------------------------------------------------------------------
-# KONFIGURASI AWS S3 CLIENT (LOCALSTACK)
-# ------------------------------------------------------------------------------
+
+# AWS S3 CLIENT CONFIGURATION (LOCALSTACK)
+
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "raw-data-ingestion-bucket")
 LOCALSTACK_HOST = os.environ.get("LOCALSTACK_HOSTNAME", "localhost")
 ENDPOINT_URL = f"http://{LOCALSTACK_HOST}:4566"
 
-# Menginisialisasi S3 Client yang mengarah ke LocalStack
+# Initialize S3 Client pointing to LocalStack
 s3_client = boto3.client(
     "s3",
     endpoint_url=ENDPOINT_URL,
@@ -26,7 +26,7 @@ s3_client = boto3.client(
 
 @app.get("/")
 def root():
-    """Endpoint pengecekan kesehatan API (Health Check)"""
+    """API Health Check Endpoint"""
     return {
         "status": "online",
         "service": "Upload Ingestion API",
@@ -36,21 +36,21 @@ def root():
 @app.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_file(file: UploadFile = File(...)):
     """
-    Endpoint untuk mengunggah berkas (CSV / JSON) ke AWS S3.
+    Endpoint for uploading files (CSV / JSON) to AWS S3.
     """
-    # 1. Validasi Ekstensi File
+    # 1. Validate File Extension
     allowed_extensions = [".csv", ".json"]
     file_ext = os.path.splitext(file.filename)[1].lower()
     
     if file_ext not in allowed_extensions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Format file '{file_ext}' tidak didukung! Gunakan .csv atau .json"
+            detail=f"File format '{file_ext}' is not supported! Please use .csv or .json"
         )
 
     try:
-        # 2. Unggah Berkas Langsung ke AWS S3
-        print(f"Mengunggah file '{file.filename}' ke S3 Bucket '{S3_BUCKET_NAME}'...")
+        # 2. Upload File Directly to AWS S3
+        print(f"Uploading file '{file.filename}' to S3 Bucket '{S3_BUCKET_NAME}'...")
         
         s3_client.upload_fileobj(
             file.file,
@@ -59,15 +59,15 @@ async def upload_file(file: UploadFile = File(...)):
         )
 
         return {
-            "message": "File berhasil diunggah!",
+            "message": "File uploaded successfully!",
             "file_name": file.filename,
             "target_bucket": S3_BUCKET_NAME,
             "status": "SUCCESS"
         }
 
     except Exception as e:
-        print(f"Error saat mengunggah ke S3: {str(e)}")
+        print(f"Error while uploading to S3: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Gagal mengunggah file ke S3: {str(e)}"
+            detail=f"Failed to upload file to S3: {str(e)}"
         )

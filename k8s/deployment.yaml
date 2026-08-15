@@ -1,6 +1,6 @@
-# ------------------------------------------------------------------------------
+
 # 1. KUBERNETES SERVICE (Pintu Gerbang Jaringan)
-# ------------------------------------------------------------------------------
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -16,9 +16,9 @@ spec:
   selector:
     app: upload-api
 ---
-# ------------------------------------------------------------------------------
+
 # 2. KUBERNETES DEPLOYMENT (Pengelola Pods FastAPI)
-# ------------------------------------------------------------------------------
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -1,20 +1,20 @@
-# Menggunakan base image Python versi ringkas (slim)
+# Use compact Python base image (slim)
 FROM python:3.10-slim
 
-# Menentukan folder kerja di dalam container
+# Set working directory inside the container
 WORKDIR /app
 
-# Menyalin file daftar dependencies
+# Copy dependencies list file
 COPY requirements.txt .
 
-# Menginstal paket/library Python
+# Install Python packages/libraries
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Menyalin seluruh kode aplikasi ke dalam container
+# Copy entire application code into the container
 COPY . .
 
-# Membuka port 8000 untuk diakses dari luar
+# Expose port 8000 for external access
 EXPOSE 8000
 
-# Perintah untuk menjalankan FastAPI saat container dinyalakan
+# Command to run FastAPI when the container starts
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

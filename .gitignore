@@ -1,44 +1,44 @@
-# ------------------------------------------------------------------------------
-# 1. TERRAFORM (File State & Cache LocalStack)
-# ------------------------------------------------------------------------------
-# Folder cache provider Terraform
+
+# 1. TERRAFORM (State Files & LocalStack Cache)
+
+# Terraform provider cache directory
 .terraform/
 .terraform.lock.hcl
 
-# File state Terraform (berisi data sensitif & status infrastruktur lokal)
+# Terraform state files (contains sensitive data & local infrastructure status)
 *.tfstate
 *.tfstate.*
 
-# File gembok kunci lokal jika terjadi error
+# Local lock file generated on errors
 .terraform.tfstate.lock.info
 
-# File zip hasil kompresi Lambda otomatis
+# Automatically compressed Lambda zip file
 terraform/lambda_function.zip
 
-# ------------------------------------------------------------------------------
+
 # 2. PYTHON & VIRTUAL ENVIRONMENT
-# ------------------------------------------------------------------------------
-# Cache kompilasi Python
+
+# Python compilation cache
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Folder Virtual Environment lokal
+# Local Virtual Environment directories
 venv/
 .venv/
 env/
 ENV/
 
-# ------------------------------------------------------------------------------
+
 # 3. DOCKER & LOCALSTACK VOLUME
-# ------------------------------------------------------------------------------
-# Data persistent LocalStack dari docker-compose
+
+# LocalStack persistent data from docker-compose
 volume/
 *.log
 
-# ------------------------------------------------------------------------------
+
 # 4. OPERATING SYSTEM & EDITOR CACHE
-# ------------------------------------------------------------------------------
+
 .DS_Store
 .idea/
 .vscode/

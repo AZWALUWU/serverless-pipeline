@@ -1,32 +1,26 @@
-# ------------------------------------------------------------------------------
 # 1. AWS S3 BUCKET (Ingestion Bucket)
-# Tempat menampung file CSV/JSON mentah yang diunggah oleh pengguna/API
-# ------------------------------------------------------------------------------
+# Holds raw CSV/JSON files uploaded by users or APIs
 resource "aws_s3_bucket" "ingestion_bucket" {
   bucket        = "raw-data-ingestion-bucket"
-  force_destroy = true # Memungkinkan bucket dihapus saat pengujian walaupun ada isinya
+  force_destroy = true # Allows bucket deletion during testing even if it contains objects
 }
 
-# ------------------------------------------------------------------------------
-# 2. AWS DYNAMODB TABLE (Database NoSQL)
-# Tempat menyimpan hasil agregasi/olahan data dari Lambda
-# ------------------------------------------------------------------------------
+# 2. AWS DYNAMODB TABLE (NoSQL Database)
+# Stores aggregated or processed data results from Lambda
 resource "aws_dynamodb_table" "processed_data" {
   name         = "processed-data-table"
-  billing_mode = "PAY_PER_REQUEST" # Mode tanpa biaya bulanan (Serverless/On-Demand)
-  hash_key     = "id"              # Primary Key unik untuk setiap data
+  billing_mode = "PAY_PER_REQUEST" # Serverless/On-Demand mode with no monthly fixed costs
+  hash_key     = "id"              # Unique Primary Key for each item
 
-  # Mendefinisikan tipe data untuk Primary Key 'id'
+  # Defines data type for Primary Key 'id'
   attribute {
     name = "id"
-    type = "S" # "S" berarti String (Teks)
+    type = "S" # "S" stands for String
   }
 }
 
-# ------------------------------------------------------------------------------
 # 3. AWS SNS TOPIC (Notification/Alerting System)
-# Tempat mengirim pesan peringatan jika terjadi error/anomali data
-# ------------------------------------------------------------------------------
+# Used to dispatch alert messages when data errors or anomalies occur
 resource "aws_sns_topic" "anomaly_alerts" {
   name = "anomaly-alerts-topic"
 }

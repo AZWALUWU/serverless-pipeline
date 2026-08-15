@@ -1,6 +1,6 @@
 name: Serverless Data Pipeline CI/CD
 
-# Menentukan kapan pipeline ini berjalan (saat push atau pull request ke branch main/master)
+# Defines when this pipeline runs (on push or pull request to main/master branches)
 on:
   push:
     branches: [ "main", "master" ]
@@ -8,43 +8,41 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  # ------------------------------------------------------------------------------
-  # JOB 1: PENGECEKAN KUALITAS KODE (PYTHON LINTING & TERRAFORM VALIDATION)
-  # ------------------------------------------------------------------------------
+  # JOB 1: CODE QUALITY CHECK (PYTHON LINTING & TERRAFORM VALIDATION)
   code-quality:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Mengambil kode dari repositori GitHub
+      # Step 1: Checkout repository code from GitHub
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Menyiapkan environment Python 3.10
+      # Step 2: Set up Python 3.10 environment
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # Step 3: Menginstal tool linter (Flake8)
+      # Step 3: Install linter tool (Flake8)
       - name: Install Python Dependencies & Linter
         run: |
           python -m pip install --upgrade pip
           pip install flake8
 
-      # Step 4: Mengecek kesalahan sintaks pada kode Python
-      - name: Lint Kode Python (FastAPI & Lambda)
+      # Step 4: Check Python code for syntax errors
+      - name: Lint Python Code (FastAPI & Lambda)
         run: |
-          # Berhenti jika ada error sintaks berat (E9, F63, F7, F82)
+          # Stop build if there are critical syntax errors (E9, F63, F7, F82)
           flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Pengecekan standar kerapian kode
+          # Standard code formatting check
           flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      # Step 5: Menyiapkan CLI Terraform
+      # Step 5: Set up Terraform CLI
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Step 6: Validasi format dan sintaks file Terraform
+      # Step 6: Validate Terraform file syntax and format
       - name: Validate Terraform Code
         run: |
           cd terraform
@@ -52,36 +50,34 @@ jobs:
           terraform fmt -check
           terraform validate
 
-  # ------------------------------------------------------------------------------
-  # JOB 2: PENGECEKAN KERENTANAN KEAMANAN (TRIVY SECURITY SCAN)
-  # ------------------------------------------------------------------------------
+  # JOB 2: SECURITY VULNERABILITY CHECK (TRIVY SECURITY SCAN)
   security-scan:
     name: Security & Vulnerability Scan (Trivy)
     runs-on: ubuntu-latest
-    needs: code-quality # Hanya berjalan jika Job 1 (code-quality) berhasil
+    needs: code-quality # Only runs if Job 1 (code-quality) succeeds
 
     steps:
-      # Step 1: Mengambil kode dari repositori
+      # Step 1: Checkout repository code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Scan repositori & file Terraform menggunakan Trivy
-      - name: Scan Filesystem & Terraform dengan Trivy
+      # Step 2: Scan repository & Terraform files using Trivy
+      - name: Scan Filesystem & Terraform with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           format: 'table'
-          exit-code: '0' # Menampilkan laporan tanpa membatalkan build
+          exit-code: '0' # Displays report without failing the build
           severity: 'HIGH,CRITICAL'
 
-      # Step 3: Membuat Docker Image Upload API
+      # Step 3: Build Upload API Docker Image
       - name: Build Docker Image
         run: |
           docker build -t upload-api:latest src/api/
 
-      # Step 4: Scan Docker Image dari vulnerability menggunakan Trivy
-      - name: Scan Docker Image dengan Trivy
+      # Step 4: Scan Docker Image for vulnerabilities using Trivy
+      - name: Scan Docker Image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'upload-api:latest'

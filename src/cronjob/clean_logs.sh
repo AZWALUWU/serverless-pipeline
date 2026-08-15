@@ -1,26 +1,23 @@
 #!/bin/sh
 
-# ------------------------------------------------------------------------------
-# SKRIP BASH HOUSEKEEPING & LOG RETENTION AGENT
-# Dijalankan secara otomatis oleh Kubernetes CronJob
-# ------------------------------------------------------------------------------
-
-# Alamat LocalStack jika dipanggil dari dalam jaringan Kubernetes / Docker
+# HOUSEKEEPING & LOG RETENTION AGENT BASH SCRIPT
+# Executed automatically by Kubernetes CronJob
+# LocalStack address when called from within the Kubernetes / Docker network
 LOCALSTACK_HOST="${LOCALSTACK_HOSTNAME:-localstack_main}"
 ENDPOINT_URL="http://${LOCALSTACK_HOST}:4566"
 BUCKET_NAME="raw-data-ingestion-bucket"
 
 echo "=========================================================="
-echo "🕒 [CRONJOB AGENT] MEMULAI HOUSEKEEPING & AUDIT STORAGE"
-echo "Waktu Eksekusi: $(date)"
+echo "🕒 [CRONJOB AGENT] STARTING HOUSEKEEPING & STORAGE AUDIT"
+echo "Execution Time: $(date)"
 echo "=========================================================="
 
-# Menggunakan AWS CLI untuk memeriksa daftar file yang ada di S3 Bucket
-echo "1. Memeriksa daftar berkas di S3 Bucket: $BUCKET_NAME..."
+# Use AWS CLI to check the list of files in the S3 Bucket
+echo "1. Checking file list in S3 Bucket: $BUCKET_NAME..."
 aws --endpoint-url=$ENDPOINT_URL s3 ls s3://$BUCKET_NAME/ --recursive
 
-# Simulasi ringkasan pembersihan/arsip
+# Cleanup/archive summary simulation
 echo ""
-echo "2. Audit Storage & Pembersihan Log..."
-echo "✅ Audit selesai: Semua berkas terverifikasi aman dan terarsip."
+echo "2. Storage Audit & Log Cleanup..."
+echo "✅ Audit complete: All files verified safe and archived."
 echo "=========================================================="

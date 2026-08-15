@@ -7,14 +7,14 @@ import io
 import uuid
 from datetime import datetime
 
-# ------------------------------------------------------------------------------
-# KONFIGURASI BOTO3 (AWS SDK FOR PYTHON)
-# Mengambil variabel lingkungan dari Terraform dan LocalStack
-# ------------------------------------------------------------------------------
+
+# BOTO3 CONFIGURATION (AWS SDK FOR PYTHON)
+# Fetch environment variables from Terraform and LocalStack
+
 DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE", "processed-data-table")
 SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN")
 
-# Mengatur endpoint LocalStack agar Lambda dalam container bisa berkomunikasi dengan layanan AWS lokal
+# Configure LocalStack endpoint for containerized Lambda communication with local AWS services
 localstack_host = os.environ.get("LOCALSTACK_HOSTNAME", "localhost")
 endpoint_url = f"http://{localstack_host}:4566"
 
@@ -27,32 +27,32 @@ table = dynamodb_resource.Table(DYNAMODB_TABLE_NAME)
 
 def handler(event, context):
     """
-    Fungsi Handler Utama Lambda
-    Terpicu otomatis saat ada event s3:ObjectCreated
+    Main Lambda Handler Function
+    Triggered automatically on s3:ObjectCreated events
     """
-    print("=== [LAMBDA PROCESSOR] MEMULAI PEMROSESAN FILE ===")
+    print("=== [LAMBDA PROCESSOR] STARTING FILE PROCESSING ===")
 
     try:
-        # 1. Ambil Nama Bucket dan Nama File (Key) dari Event S3
+        # 1. Extract Bucket Name and File Name (Key) from S3 Event
         record = event["Records"][0]
         bucket_name = record["s3"]["bucket"]["name"]
-        # Unquote digunakan untuk mengubah karakter URL-encoded (misal %20 jadi spasi)
+        # unquote_plus converts URL-encoded characters (e.g., %20 to space)
         file_key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
 
-        print(f"File ditemukan: '{file_key}' di Bucket: '{bucket_name}'")
+        print(f"File found: '{file_key}' in Bucket: '{bucket_name}'")
 
-        # 2. Unduh File dari S3
+        # 2. Download File from S3
         s3_response = s3_client.get_object(Bucket=bucket_name, Key=file_key)
         file_content = s3_response["Body"].read().decode("utf-8")
 
-        # 3. Proses/Parse Isi File berdasarkan Format (JSON atau CSV)
+        # 3. Process/Parse File Contents based on Format (JSON or CSV)
         total_items = 0
         total_amount = 0.0
         anomalies_found = []
 
         if file_key.endswith(".json"):
             data = json.loads(file_content)
-            # Jika berupa daftar/list transaksi
+            # Handle list of transaction items or single object
             items = data if isinstance(data, list) else [data]
             
             for index, item in enumerate(items):
@@ -60,10 +60,10 @@ def handler(event, context):
                 amount = float(item.get("amount", 0))
                 total_amount += amount
 
-                # Deteksi Anomali: Transaksi bernilai negatif
+                # Anomaly Detection: Negative transaction values
                 if amount < 0:
                     anomalies_found.append(
-                        f"Baris {index + 1}: Transaksi bernilai negatif (${amount})"
+                        f"Row {index + 1}: Negative transaction value (${amount})"
                     )
 
         elif file_key.endswith(".csv"):
@@ -73,13 +73,13 @@ def handler(event, context):
                 amount = float(row.get("amount", 0))
                 total_amount += amount
 
-                # Deteksi Anomali: Transaksi bernilai negatif
+                # Anomaly Detection: Negative transaction values
                 if amount < 0:
                     anomalies_found.append(
-                        f"Baris {index + 1}: Transaksi bernilai negatif (${amount})"
+                        f"Row {index + 1}: Negative transaction value (${amount})"
                     )
 
-        # 4. Simpan Hasil Olahan Data ke DynamoDB
+        # 4. Save Processed Results to DynamoDB
         record_id = str(uuid.uuid4())
         processed_at = datetime.utcnow().isoformat()
 
@@ -94,24 +94,24 @@ def handler(event, context):
                 "processed_at": processed_at,
             }
         )
-        print(f"✅ Data berhasil disimpan ke DynamoDB dengan ID: {record_id}")
+        print(f"✅ Data successfully saved to DynamoDB with ID: {record_id}")
 
-        # 5. Jika Ditemukan Anomali, Kirim Notifikasi via AWS SNS
+        # 5. Send AWS SNS Notification if Anomalies Detected
         if anomalies_found and SNS_TOPIC_ARN:
             alert_message = (
-                f"🚨 ALARM ANOMALI DATA DETECTED 🚨\n\n"
+                f"🚨 DATA ANOMALY ALARM DETECTED 🚨\n\n"
                 f"File Name: {file_key}\n"
                 f"Total Records: {total_items}\n"
-                f"Jumlah Anomali: {len(anomalies_found)}\n"
-                f"Rincian Anomali:\n" + "\n".join(anomalies_found)
+                f"Anomaly Count: {len(anomalies_found)}\n"
+                f"Anomaly Details:\n" + "\n".join(anomalies_found)
             )
 
             sns_client.publish(
                 TopicArn=SNS_TOPIC_ARN,
-                Subject=f"Alert: Anomali Data pada File {file_key}",
+                Subject=f"Alert: Data Anomaly in File {file_key}",
                 Message=alert_message,
             )
-            print("⚠️ Alert notifikasi berhasil dikirim ke AWS SNS!")
+            print("⚠️ Alert notification successfully sent to AWS SNS!")
 
         return {
             "statusCode": 200,
@@ -119,5 +119,5 @@ def handler(event, context):
         }
 
     except Exception as e:
-        print(f"❌ Error saat memproses file: {str(e)}")
+        print(f"❌ Error while processing file: {str(e)}")
         raise e
