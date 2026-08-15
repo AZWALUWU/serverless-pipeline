@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: log-retention-cronjob
+spec:
+  # JADWAL EKSEKUSI (Format Crontab): "*/5 * * * *" artinya berjalan setiap 5 menit
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: log-retention-agent
+              image: amazon/aws-cli:latest # Container ringan yang sudah terpasang AWS CLI
+              env:
+                - name: LOCALSTACK_HOSTNAME
+                  value: "host.docker.internal"
+              # Menjalankan skrip perintah audit & pemeriksaan S3 secara langsung
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "=== [K8S CRONJOB] RUNNING LOG RETENTION AGENT ==="
+                  echo "Waktu Eksekusi: $(date)"
+                  aws --endpoint-url=http://host.docker.internal:4566 s3 ls s3://raw-data-ingestion-bucket/
+                  echo "✅ Audit Storage & Log Retention selesai!"
+          restartPolicy: OnFailure # Jika gagal, coba jalankan ulang job

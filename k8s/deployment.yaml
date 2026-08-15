@@ -1,0 +1,48 @@
+# ------------------------------------------------------------------------------
+# 1. KUBERNETES SERVICE (Pintu Gerbang Jaringan)
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: upload-api-service
+  labels:
+    app: upload-api
+spec:
+  type: NodePort
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30090 # DIUBAH KE 30090 AGAR TIDAK BENTROK
+  selector:
+    app: upload-api
+---
+# ------------------------------------------------------------------------------
+# 2. KUBERNETES DEPLOYMENT (Pengelola Pods FastAPI)
+# ------------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upload-api-deployment
+  labels:
+    app: upload-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upload-api
+  template:
+    metadata:
+      labels:
+        app: upload-api
+    spec:
+      containers:
+        - name: upload-api
+          image: upload-api:v1
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: S3_BUCKET_NAME
+              value: "raw-data-ingestion-bucket"
+            - name: LOCALSTACK_HOSTNAME
+              value: "host.docker.internal"
